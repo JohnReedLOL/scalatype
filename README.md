@@ -11,8 +11,8 @@ Open up a terminal in the root directory of your SBT project and run it. scalaty
 
 #### Features:
 
-- Leave out type whose name is already given on the right hand side. val cat = new Cat() // no explicit type necessary.
-- Leave out declaration of primatives. val str = "string" // no explicit type necessary.
+- Leave out type whose name is already given on the right hand side. `val cat = new Cat() // no explicit type necessary.`
+- Leave out declaration of primatives. `val str = "string" // no explicit type necessary.`
 - Undo last run.
 
 #### Command line options:
