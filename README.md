@@ -20,3 +20,11 @@ Open up a terminal in the root directory of your SBT project and run it. scalaty
 - noRepeats // Do not repeat a type on the right hand side
 - noPrimatives // Do not make explicit types for declaration of primatives
 - undo // Undoes the last operation
+
+#### Building scalatype:
+
+Just do "sbt package" to generate a jar file.
+
+#### Committers:
+
+- John Reed
