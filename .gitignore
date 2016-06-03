@@ -26,3 +26,4 @@ project/plugins/project/
 _site/
 .coveralls.yml
 log
+notes.txt
