@@ -17,9 +17,9 @@ Open up a terminal in the root directory of your SBT project and run it. scalaty
 
 #### Command line options:
 
-- noRepeats // Do not repeat a type on the right hand side
-- noPrimatives // Do not make explicit types for declaration of primatives
-- undo // Undoes the last operation
+- -noRepeats // Do not repeat a type on the right hand side
+- -noPrimatives // Do not make explicit types for declaration of primatives
+- -undo // Undoes the last operation
 
 #### Building scalatype:
 
