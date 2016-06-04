@@ -2,7 +2,9 @@ package com.example
 
 import java.io._
 import java.util._
-import info.collaboration_station.utilities._
+import scala.trace.{Debug, SDebug, Pos}
+import scala.util.matching.Regex
+// import info.collaboration_station.utilities._
 
 object Hello {
   def main(args: Array[String]): Unit = {
@@ -21,7 +23,7 @@ object Hello {
     // file name (one or more characters)
     // .java
     // end of line
-    val fileNameExtractorRegEx =
+    val FileNameExtractorRegEx =
       """
          |^(
          |.*
@@ -35,7 +37,7 @@ object Hello {
 
     // extracts declarations such as " val cat_!: Cat = makeCat()" or "Foo.bar();var     <><: :Int = 7"
     // or "/*comment*/ var cat: CAT_<>< = makeCat()"
-    val declarationExtractorRegEx =
+    val DeclarationExtractorRegEx =
       // start line
       // whitespace or comments than semicolon then whitespace or comments then whitespace
       // var or val
@@ -65,14 +67,54 @@ object Hello {
         |.*
         |)$
       """.stripMargin
-    /*
-    val declarationExtractorRegEx = raw"^(" +
-      raw"\s*" +
-      raw"" +
-      raw"$"
-    */
+
+    val DummyRegEx: Regex  = """(.*)""".r
+
+    val Process = """([a-cA-C])([^\s]+)""".r // define first, rest is non-space
+    for (p <- Process findAllIn "baha bah Cah zzzzzzAahr") p match {
+      case Process("b", rest) => println("first: 'b', some rest " + rest) // b aha, b ha
+      case Process(first, rest) => println("some " + first + ", rest: " + rest) // C ah, some A, rest: ahr
+      // etc.
+    }
+
+    val MY_RE = "(foo|bar).*".r
+    val result = "foo123" match { case MY_RE(m) => m; case _ => "No match" }
+    val MY_RE2 = "(foo|bar)".r
+    val result2 = "foo123" match { case MY_RE2(m) => m; case _ => "No match" }
+    Debug.trace(result)
+    Debug.trace(result2)
+
+    val BookExtractorRE: Regex = """Book: title=([^,]+),\s+author=(.+)""".r     // <1>
+    val MagazineExtractorRE: Regex = """Magazine: title=([^,]+),\s+issue=(.+)""".r
+
+    val catalog = Seq(
+      "Book: title=Programming Scala Second Edition, author=Dean Wampler",
+      "Magazine: title=The New Yorker, issue=January 2014",
+      "Unknown: text=Who put this here??"
+    )
+
+    for (item <- catalog) {
+      item match {
+        case BookExtractorRE(title, author) => // <2>
+          println(s"""Book "$title", written by $author""")
+        case MagazineExtractorRE(title, issue) =>
+          println(s"""Magazine "$title", issue $issue""")
+        case entry => println(s"Unrecognized entry: $entry")
+      }
+    }
+
+      /*
+      val declarationExtractorRegEx = raw"^(" +
+        raw"\s*" +
+        raw"" +
+        raw"$"
+      */
     while ({line = in.readLine; line} != null) {
       System.out.println(line)
+      line match {
+        case DummyRegEx(title) => println(s""" dummy: $title """)
+        case noMatch => println("noMatch: " + noMatch)
+      }
     }
     System.out.println("Done1")
     in.close
