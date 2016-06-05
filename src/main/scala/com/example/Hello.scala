@@ -77,6 +77,7 @@ object Hello {
       // etc.
     }
 
+
     val MY_RE = "(foo|bar).*".r
     val result = "foo123" match { case MY_RE(m) => m; case _ => "No match" }
     val MY_RE2 = "(foo|bar)".r
@@ -84,25 +85,29 @@ object Hello {
     Debug.trace(result)
     Debug.trace(result2)
 
-    val BookExtractorRE: Regex = """Book: title=([^,]+),\s+author=(.+)""".r     // <1>
-    val MagazineExtractorRE: Regex = """Magazine: title=([^,]+),\s+issue=(.+)""".r
+    // (.+)
+    // triple quote includes whitespace and newline. Remove it with .replaceAll("(\\s|\n)"
+    val BookExtractorRE: Regex =
+      """([^,]+) , (val|var) \s+
+         ([^,]+) \s{1} author= (.+)""".replaceAll("(\\s|\n)", "").r     // <1>
+    val MagazineExtractorRE: Regex = """([^,]+),\s+issue=(.+)""".r
 
     val catalog = Seq(
-      "Book: title=Programming Scala Second Edition, author=Dean Wampler",
-      "Magazine: title=The New Yorker, issue=January 2014",
+      "title=Programming Scala Second Edition,val  booboo author=Dean Wampler",
+      "title=The New Yorker, issue=January 2014",
       "Unknown: text=Who put this here??"
     )
 
     for (item <- catalog) {
       item match {
-        case BookExtractorRE(title, author) => // <2>
-          println(s"""Book "$title", written by $author""")
+        case BookExtractorRE(title, variable, separator, author) => // <2>
+          println(s"""Book "$title", written by $author. variable = $variable, sep = $separator""")
         case MagazineExtractorRE(title, issue) =>
           println(s"""Magazine "$title", issue $issue""")
-        case entry => println(s"Unrecognized entry: $entry")
+        case entry => println(s"Unrecognized entryyy: $entry")
       }
     }
-
+    System.exit(-1)
       /*
       val declarationExtractorRegEx = raw"^(" +
         raw"\s*" +
