@@ -17,7 +17,7 @@ object RegEx {
 
   // extracts declarations such as " val cat_!: Cat = makeCat()" or "Foo.bar();var     <><: :Int = 7"
   // or "/*comment*/ var cat: CAT_<>< = makeCat()"
-  val DeclarationExtractor =
+  val DeclExtractor =
     """(\s* | .* ; \s* | .* \s+)
          (val|var)
          \s+
@@ -26,6 +26,18 @@ object RegEx {
          :
          \s*
          ([A-Z]\S*)
+         \s*
+         =
+         .*
+         ;
+    """.replaceAll("(\\s)", "").r
+
+  // Same, but without the : Type. Semi-colon optional.
+  val DeclExtractorNoBoilerplate =
+    """(\s* | .* ; \s* | .* \s+)
+         (val|var)
+         \s+
+         (\S+)
          \s*
          =
          .*
