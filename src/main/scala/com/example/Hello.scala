@@ -70,23 +70,13 @@ object Hello {
     // double forward slash
     // one whitespace character
     // file name (one or more characters terminated by .java or .scala)
-    val JavaFileRegEx =
+    val SourceFileRegEx =
       """.*
          \s+
          //
          \s{1}
          ([\w.]+)
-         \.
-         java
-      """.replaceAll("(\\s)", "").r
-    val ScalaFileRegEx =
-      """.*
-         \s+
-         //
-         \s{1}
-         ([\w.]+)
-         \.
-         scala
+         (\.java|\.scala)
       """.replaceAll("(\\s)", "").r
     val BookExtractorRE: Regex =
       """([^\.j]+) \.j (val|var) \s+
@@ -121,11 +111,11 @@ object Hello {
     val string2 = " // Hello.scala"
     // [[syntax trees at end of                    parser]] // JavaMain.java--NO_MATCH
     string1 match {
-      case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1)
+      case SourceFileRegEx((fileName1 @ _), (suffix @ _)) => println("file: " + fileName1 + " suffix: " + suffix)
       case other => println(other + "--NO_MATCH")
     }
     string2 match {
-      case ScalaFileRegEx(fileName2) => println(" Scala file: " + fileName2)
+      case SourceFileRegEx(fileName1, suffix) => println("file: " + fileName1 + " suffix: " + suffix)
       case other => println(other + "--NO_MATCH")
     }
     //System.exit(-1)
@@ -133,8 +123,7 @@ object Hello {
     while ({line = in.readLine; line} != null) {
       //System.out.println(line)
       line match { //  // Tester.java
-        case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1 + "\n\n")
-        case ScalaFileRegEx(fileName2) => println(" Scala file: " + fileName2 + "\n\n")
+        case SourceFileRegEx(fileName, suffix) => println("file: " + fileName + " suffix: " + suffix +  "\n\n")
         case other => println(other + "--NO_MATCH") //  // Hello.scala
       }
     }
