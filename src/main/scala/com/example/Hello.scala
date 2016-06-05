@@ -71,7 +71,7 @@ object Hello {
     // one whitespace character
     // file name (one or more characters terminated by .java or .scala)
     val JavaFileRegEx =
-      """\S*
+      """.*
          \s+
          //
          \s{1}
@@ -80,7 +80,7 @@ object Hello {
          java
       """.replaceAll("(\\s)", "").r
     val ScalaFileRegEx =
-      """\S*
+      """.*
          \s+
          //
          \s{1}
@@ -119,7 +119,7 @@ object Hello {
 
     val string1 = " // Tester.java"
     val string2 = " // Hello.scala"
-
+    // [[syntax trees at end of                    parser]] // JavaMain.java--NO_MATCH
     string1 match {
       case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1)
       case other => println(other + "--NO_MATCH")
@@ -128,12 +128,12 @@ object Hello {
       case ScalaFileRegEx(fileName2) => println(" Scala file: " + fileName2)
       case other => println(other + "--NO_MATCH")
     }
-    System.exit(-1)
+    //System.exit(-1)
 
     while ({line = in.readLine; line} != null) {
       //System.out.println(line)
       line match { //  // Tester.java
-        // case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1 + "\n\n")
+        case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1 + "\n\n")
         case ScalaFileRegEx(fileName2) => println(" Scala file: " + fileName2 + "\n\n")
         case other => println(other + "--NO_MATCH") //  // Hello.scala
       }
