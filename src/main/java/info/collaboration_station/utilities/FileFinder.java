@@ -63,105 +63,11 @@ public class FileFinder {
     }
 
     /**
-     * Sample code that finds files that match the specified glob pattern. For
-     * more information on what constitutes a glob pattern, see
-     * https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-     *
-     * The file or directories that match the pattern are printed to standard
-     * out. The number of matches is also printed.
-     *
-     * When executing this application, you must put the glob pattern in quotes,
-     * so the shell will not expand any wild cards: java Find . -name "*.java"
-     */
-    private static class Finder
-            extends SimpleFileVisitor<Path> {
-
-        private final PathMatcher matcher_;
-        public static Path last_file_path_found = null;
-
-        Finder(final String pattern) {
-            matcher_ = FileSystems.getDefault()
-                    .getPathMatcher("glob:" + pattern);
-        }
-
-        // Compares the glob pattern against
-        // the file or directory name.
-        /**
-         *
-         * @param file
-         * @return true is found, false if not found.
-         */
-        boolean find(final Path file) {
-            final Path name = file.getFileName();
-            //Application.printEx(name.toString());
-            if (name != null && matcher_.matches(name)) {
-                last_file_path_found = file;
-                //Application.printEx("match");
-                return true;
-            }
-            //Application.printEx("no match");
-            return false;
-        }
-
-        /**
-         * Sets the last file path found to null and returns its value from
-         * before it was set to null.
-         *
-         * @return The file path obtained via the search.
-         */
-        Path done() {
-            if (last_file_path_found == null) {
-                //Application.printEx("File not found");
-            } else {
-                //Application.printEx("File found");
-            }
-            final Path to_return = last_file_path_found;
-            last_file_path_found = null;
-            return to_return;
-        }
-
-        // Invoke the pattern matching
-        // method on each file.
-        @Override
-        public FileVisitResult visitFile(Path file,
-                BasicFileAttributes attrs) {
-            if (find(file)) { // if we found the file, terminate
-                //Application.printEx("Terminating file search");
-                return FileVisitResult.TERMINATE;
-            } else { // else continue
-                //Application.printEx("Continueing file search");
-                return CONTINUE;
-            }
-        }
-
-        // Invoke the pattern matching
-        // method on each directory.
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir,
-                BasicFileAttributes attrs) {
-            if (find(dir)) { // if we found the file, terminate
-                //Application.printEx("Terminating directory search");
-                return FileVisitResult.TERMINATE;
-            } else { // else continue
-                //Application.printEx("Continueing directory search");
-                return CONTINUE;
-            }
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file,
-                IOException exc) {
-            //System.err.println(exc);
-            return CONTINUE;
-        }
-    }
-
-    /**
      * @return null on failure non-null on success.
      */
     public static String tryFindFileWhoseNameBeginsWith(final String file_name, final String searchDirectory) {
         final Path startingDir = Paths.get(searchDirectory); //Paths.get(WORKING_DIRECTORY);
-        Finder finder = new Finder(file_name + "*");
+        GlobFinder finder = new GlobFinder(file_name + "*");
         try {
             Files.walkFileTree(startingDir, EnumSet.of(FOLLOW_LINKS), mySearchDepth_, finder);
         } catch (IOException e) {
@@ -219,7 +125,7 @@ public class FileFinder {
 
         final Path startingDir = Paths.get(base_directory);
         Tester.check(startingDir != null);
-        final Finder finder = new Finder(file_name);
+        final GlobFinder finder = new GlobFinder(file_name); // Exception in thread "main" java.lang.NoClassDefFoundError: info/collaboration_station/utilities/FileFinder$Finder
         Tester.check(finder != null);
         try {
             Files.walkFileTree(startingDir, EnumSet.of(FOLLOW_LINKS), mySearchDepth_, finder);

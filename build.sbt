@@ -2,7 +2,7 @@ name := """scalatype"""
 
 version := "1.0"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.8"
 
 libraryDependencies += "org.specs2" %% "specs2-core" % "3.0.1" % "test"
 

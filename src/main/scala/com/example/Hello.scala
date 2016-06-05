@@ -1,13 +1,32 @@
 package com.example
 
 import java.io._
+import java.nio.file.Path
 import java.util._
-import scala.trace.{Debug, SDebug, Pos}
+
+import scala.trace.{Debug, Pos, SDebug}
 import scala.util.matching.Regex
-// import info.collaboration_station.utilities._
+import info.collaboration_station.utilities.{FileFinder, GlobFinder}
 
 object Hello {
   def main(args: Array[String]): Unit = {
+
+    /*
+    Commenting out the below line causes:
+    Disconnected from the target VM, address: '127.0.0.1:43748', transport: 'socket'
+    Exception in thread "main" java.lang.NoClassDefFoundError: info/collaboration_station/utilities/GlobFinder
+      at info.collaboration_station.utilities.FileFinder.tryFindAbsolutePathOfFileWhoseNameIs(FileFinder.java:128)
+      at com.example.Hello$.main(Hello.scala:137)
+      at com.example.Hello.main(Hello.scala)
+    Caused by: java.lang.ClassNotFoundException: info.collaboration_station.utilities.GlobFinder
+      at java.net.URLClassLoader.findClass(URLClassLoader.java:381)
+      at java.lang.ClassLoader.loadClass(ClassLoader.java:424)
+      at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:331)
+      at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
+      ... 3 more
+     */
+    val vvv = new GlobFinder("foo")
+
     val toPrint = "Hello, world!"
     println(toPrint)
 
@@ -122,11 +141,19 @@ object Hello {
 
     var currentLine = 0 // start at zero and go up
 
+    println("Working directory: " + FileFinder.WORKING_DIRECTORY)
+    FileFinder.setMySearchDepth(20)
     while ({line = in.readLine; line} != null) {
       //System.out.println(line)
       line match { //  // Tester.java
         case ScalaFileRegEx(fileName) => {
           println("file: " + fileName + "\n\n")
+          val pathNullable: Path = FileFinder.tryFindAbsolutePathOfFileWhoseNameIs(fileName, FileFinder.WORKING_DIRECTORY)
+          val pathOption: Option[Path] = Option(pathNullable) // None if path is null
+          pathOption match {
+            case Some(path) => println("Some path: " + path.toString)
+            case None => println("No path")
+          }
           // Find wile with name: fullFileName in project.
         }
         case other => println(other + "--NO_MATCH") //  // Hello.scala
