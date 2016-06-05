@@ -37,20 +37,20 @@ object Hello {
     // extracts declarations such as " val cat_!: Cat = makeCat()" or "Foo.bar();var     <><: :Int = 7"
     // or "/*comment*/ var cat: CAT_<>< = makeCat()"
     val DeclarationExtractorRegEx =
-      // start line
-      // whitespace or comments than semicolon then whitespace or comments then whitespace
-      // var or val
-      // optional whitespace
-      // variable name with arbitrary characters (not necessarily lowercase)
-      // optional whitespace
-      // colon
-      // optional whitespace
-      // An upper case letter indicating a type
-      // subsequent optional letters or symbols following it (non-whitespace)
-      // optional whitespace
-      // and equal sign
-      // arbitrary subsequent characters (including but not limited to whitespace)
-      // end of line
+    // start line
+    // whitespace or comments than semicolon then whitespace or comments then whitespace
+    // var or val
+    // optional whitespace
+    // variable name with arbitrary characters (not necessarily lowercase)
+    // optional whitespace
+    // colon
+    // optional whitespace
+    // An upper case letter indicating a type
+    // subsequent optional letters or symbols following it (non-whitespace)
+    // optional whitespace
+    // and equal sign
+    // arbitrary subsequent characters (including but not limited to whitespace)
+    // end of line
       """
         |^(
         |(\s*|.*;\s*|.*\s+)
@@ -67,7 +67,7 @@ object Hello {
         |)$
       """.stripMargin
 
-    val DummyRegEx: Regex  = """(.*)""".r
+    val DummyRegEx: Regex = """(.*)""".r
 
     val Process = """([a-cA-C])([^\s]+)""".r // define first, rest is non-space
     for (p <- Process findAllIn "baha bah Cah zzzzzzAahr") p match {
@@ -78,9 +78,15 @@ object Hello {
 
 
     val MY_RE = "(foo|bar).*".r
-    val result = "foo123" match { case MY_RE(m) => m; case _ => "No match" }
+    val result = "foo123" match {
+      case MY_RE(m) => m;
+      case _ => "No match"
+    }
     val MY_RE2 = "(foo|bar)".r
-    val result2 = "foo123" match { case MY_RE2(m) => m; case _ => "No match" }
+    val result2 = "foo123" match {
+      case MY_RE2(m) => m;
+      case _ => "No match"
+    }
     Debug.trace(result)
     Debug.trace(result2)
 
@@ -98,8 +104,9 @@ object Hello {
       """.replaceAll("(\\s)", "").r
     val BookExtractorRE: Regex =
       """([^\.j]+) \.j (val|var) \s+
-         ([^,]+) \s{1} author= (.+)""".replaceAll("(\\s)", "").r     // <1>
-    val MagazineExtractorRE: Regex = """([^,]+),\s+issue=(.+)""".r
+         ([^,]+) \s{1} author= (.+)""".replaceAll("(\\s)", "").r // <1>
+    val MagazineExtractorRE: Regex =
+      """([^,]+),\s+issue=(.+)""".r
 
     val catalog = Seq(
       "title=Programming Scala Second Edition.jval  booboo author=Dean Wampler",
@@ -116,12 +123,12 @@ object Hello {
         case entry => println(s"Unrecognized entryyy: $entry")
       }
     }
-      /*
-      val declarationExtractorRegEx = raw"^(" +
-        raw"\s*" +
-        raw"" +
-        raw"$"
-      */
+    /*
+    val declarationExtractorRegEx = raw"^(" +
+      raw"\s*" +
+      raw"" +
+      raw"$"
+    */
 
     Thread.sleep(100)
 
@@ -139,25 +146,81 @@ object Hello {
     }
     //System.exit(-1)
 
-    var currentLine = 0 // start at zero and go up
-
     println("Working directory: " + FileFinder.WORKING_DIRECTORY)
     FileFinder.setMySearchDepth(20)
-    while ({line = in.readLine; line} != null) {
+
+    def handleFile(path: Path) {
+      val log: File = new File(path.toString)
+      val search: String = "textFiles/a.txt"
+      val replace: String = "replaceText/b.txt"
+      try {
+        val fr: FileReader = new FileReader(log)
+        var s: String = null
+        var totalStr: String = ""
+        try {
+          val br: BufferedReader = new BufferedReader(fr)
+          try {
+            while ({s = br.readLine; s} != null) {
+              {
+                totalStr += s
+              }
+            }
+            // this is going to have to be subsituted for a gradual replace strategy.
+            totalStr = totalStr.replaceAll(search, replace)
+            val fw: FileWriter = new FileWriter(log)
+            fw.write(totalStr)
+            fw.close
+          } finally {
+            if (br != null) br.close()
+          }
+        }
+      }
+      catch {
+        case e: Exception => {
+          e.printStackTrace
+        }
+      }
+    }
+
+    var currentLine = 0 // start at zero and go up
+    var currentFile = "" // start with no file.
+    var currentLineDesugared = 0
+    while ( {
+      line = in.readLine; line
+    } != null) {
       //System.out.println(line)
-      line match { //  // Tester.java
+      line match {
+        //  // Tester.java
         case ScalaFileRegEx(fileName) => {
           println("file: " + fileName + "\n\n")
           val pathNullable: Path = FileFinder.tryFindAbsolutePathOfFileWhoseNameIs(fileName, FileFinder.WORKING_DIRECTORY)
           val pathOption: Option[Path] = Option(pathNullable) // None if path is null
           pathOption match {
-            case Some(path) => println("Some path: " + path.toString)
+            case Some(path) => {
+              println("Some path: " + path.toString)
+              currentFile = path.toString
+              currentLine = 0
+
+              var line: String = null
+              val br: BufferedReader = new BufferedReader(new FileReader(currentFile))
+              try {
+                while ( {
+                  line = br.readLine;
+                  line
+                } != null) {}
+              } finally {
+                if(br != null) {br.close()}
+              }
+              println("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+              //JavaMain.handleFile(path)
+            }
             case None => println("No path")
           }
           // Find wile with name: fullFileName in project.
         }
         case other => println(other + "--NO_MATCH") //  // Hello.scala
       }
+      currentLineDesugared += 1
     }
     System.out.println("Done1")
     in.close
