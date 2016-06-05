@@ -16,9 +16,9 @@ object RegEx {
     """.replaceAll("(\\s)", "").r
 
   // extracts declarations such as " val cat_!: Cat = makeCat()" or "Foo.bar();var     <><: :Int = 7"
-  // or "/*comment*/ var cat: CAT_<>< = makeCat()" (leaving out this last case because I don't know how to match */ and it's unusual anyway)
+  // or "/*comment*/ var cat: CAT_<>< = makeCat()"
   val DeclarationExtractor =
-    """(\s* | .* ; \s*)
+    """(\s* | .* ; \s* | .* \s+)
          (val|var)
          \s+
          (\S+)

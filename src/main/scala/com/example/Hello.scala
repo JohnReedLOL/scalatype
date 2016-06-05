@@ -48,7 +48,15 @@ object Hello {
       case RegEx.ScalaFileExtractor(fileName) => println("file: " + fileName)
       case other => println(other + "--NO_MATCH")
     }
-    //System.exit(-1)
+    type CAT_<>< = Int
+    def makeCat() = 8
+    /*comment*/ var cat    :  CAT_<><  = makeCat()
+    val string3 = " /*comment*/   var cat    :  CAT_<><  = makeCat() "
+    string3 match {
+      case RegEx.DeclarationExtractor(filler, decl, varName, refType) => println(s"$decl $varName $refType")
+      case _ => println("Fail")
+    }
+    System.exit(-1)
 
     println("Working directory: " + FileFinder.WORKING_DIRECTORY)
     FileFinder.setMySearchDepth(20)
