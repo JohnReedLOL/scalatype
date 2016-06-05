@@ -15,26 +15,6 @@ object Hello {
     val in: BufferedReader = new BufferedReader(new InputStreamReader(proc.getInputStream))
     var line: String = null
 
-    // start line
-    // optional leading characters
-    // leading whitespace [1 or more]
-    // double forward slash
-    // one whitespace character
-    // file name (one or more characters)
-    // .java
-    // end of line
-    val FileNameExtractorRegEx =
-      """
-         |^(
-         |.*
-         |\s+
-         |//
-         |\s
-         |fileName=(.+)
-         |.java
-         |)$
-       """.stripMargin
-
     // extracts declarations such as " val cat_!: Cat = makeCat()" or "Foo.bar();var     <><: :Int = 7"
     // or "/*comment*/ var cat: CAT_<>< = makeCat()"
     val DeclarationExtractorRegEx =
@@ -85,15 +65,36 @@ object Hello {
     Debug.trace(result)
     Debug.trace(result2)
 
-    // (.+)
-    // triple quote includes whitespace and newline. Remove it with .replaceAll("(\\s|\n)"
+    // optional leading characters [non-whitespace]
+    // leading whitespace [1 or more]
+    // double forward slash
+    // one whitespace character
+    // file name (one or more characters terminated by .java or .scala)
+    val JavaFileRegEx =
+      """\S*
+         \s+
+         //
+         \s{1}
+         ([\w.]+)
+         \.
+         java
+      """.replaceAll("(\\s)", "").r
+    val ScalaFileRegEx =
+      """\S*
+         \s+
+         //
+         \s{1}
+         ([\w.]+)
+         \.
+         scala
+      """.replaceAll("(\\s)", "").r
     val BookExtractorRE: Regex =
-      """([^,]+) , (val|var) \s+
-         ([^,]+) \s{1} author= (.+)""".replaceAll("(\\s|\n)", "").r     // <1>
+      """([^\.j]+) \.j (val|var) \s+
+         ([^,]+) \s{1} author= (.+)""".replaceAll("(\\s)", "").r     // <1>
     val MagazineExtractorRE: Regex = """([^,]+),\s+issue=(.+)""".r
 
     val catalog = Seq(
-      "title=Programming Scala Second Edition,val  booboo author=Dean Wampler",
+      "title=Programming Scala Second Edition.jval  booboo author=Dean Wampler",
       "title=The New Yorker, issue=January 2014",
       "Unknown: text=Who put this here??"
     )
@@ -107,18 +108,34 @@ object Hello {
         case entry => println(s"Unrecognized entryyy: $entry")
       }
     }
-    System.exit(-1)
       /*
       val declarationExtractorRegEx = raw"^(" +
         raw"\s*" +
         raw"" +
         raw"$"
       */
+
+    Thread.sleep(100)
+
+    val string1 = " // Tester.java"
+    val string2 = " // Hello.scala"
+
+    string1 match {
+      case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1)
+      case other => println(other + "--NO_MATCH")
+    }
+    string2 match {
+      case ScalaFileRegEx(fileName2) => println(" Scala file: " + fileName2)
+      case other => println(other + "--NO_MATCH")
+    }
+    System.exit(-1)
+
     while ({line = in.readLine; line} != null) {
-      System.out.println(line)
-      line match {
-        case DummyRegEx(title) => println(s""" dummy: $title """)
-        case noMatch => println("noMatch: " + noMatch)
+      //System.out.println(line)
+      line match { //  // Tester.java
+        // case JavaFileRegEx(fileName1) => println(" Java file: " + fileName1 + "\n\n")
+        case ScalaFileRegEx(fileName2) => println(" Scala file: " + fileName2 + "\n\n")
+        case other => println(other + "--NO_MATCH") //  // Hello.scala
       }
     }
     System.out.println("Done1")
