@@ -49,12 +49,9 @@ object Hello {
       case unmatchedInput => Debug.trace(unmatchedInput) //       val vvv = new GlobFinder("foo");
     }
 
-    var currentLine = 0 // start at zero and go up
-    var currentFile = "" // start with no file.
-    var currentLineDesugared = 0
     // first search through desugared code
     while ( {line = in.readLine; line} != null) {
-      //System.out.println(line)
+      Debug.trace("Starting Loop 1!!!")
       line match {
         //  // Tester.java
         case RegEx.ScalaFileExtractor(fileName) =>
@@ -64,23 +61,25 @@ object Hello {
           pathOption match {
             case Some(path) =>
               Debug.trace("Some path: " + path.toString)
-              currentFile = path.toString
-              currentLine = 0
+              val currentFile = path.toString
 
-              var line: String = null
-              var lines: String = ""
+              var fileLine: String = ""
+              var linesInFile: String = ""
               val br: BufferedReader = new BufferedReader(new FileReader(currentFile))
               try {
                 // then search through source code
-                while ( {line = br.readLine; line} != null) {
-                  line match {
+                while ( {fileLine = br.readLine; fileLine} != null) {
+                  Debug.trace("Starting Loop 2!!!")
+                  fileLine match {
                     case RegEx.DeclExtractorNoBoilerplate(leftSide, filler, decl, varName, rightSide) => {
                       Debug.trace(s"Matched $leftSide$rightSide. In source file (No boilerplate).")
                       var matchesDeclaration = false
-                      var boilerLine: String = null
+                      // var boilerLine: String = null // This line is the same as the outer line
                       // then search through desugared code again
-                      while ({boilerLine = in.readLine; boilerLine} != null && matchesDeclaration == false) {
-                        boilerLine match {
+                      while (matchesDeclaration == false && line != null) {
+                        line = in.readLine
+                        Debug.trace("Starting Loop 3!!!")
+                        line match {
                             // val vvv = new GlobFinder("foo");
                           case RegEx.DeclExtractor(boilerFiller, boilerDecl, boilerVarName, boilerRefType) =>
                             if(boilerDecl.equals(decl) && boilerVarName.equals(varName)) {
@@ -108,10 +107,10 @@ Was searching for: |    val vvv = new GlobFinder("foo") // this does appear in t
                           } // too much output
                         }
                       }
-                      Debug.trace(s"$filler$decl $varName --DEFINED")
+                      Debug.trace(s"$leftSide$rightSide is defined. Out of while loop 3")
                     }
                     case unmatchedLine => {
-                      lines += unmatchedLine + File.separator // append without modification
+                      linesInFile += unmatchedLine + File.separator // append without modification
                     }
                   }
                   // if the line is a declaration, insert the type (increment the desugared file until you get a match)
@@ -119,9 +118,9 @@ Was searching for: |    val vvv = new GlobFinder("foo") // this does appear in t
               } finally {
                 if (br != null) {
                   br.close()
+                  Debug.trace("closed br")
                 }
               }
-              Debug.trace("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             //JavaMain.handleFile(path)
             case None => Tester.killApplication(
               s"This file $fileName was supposed to exist, but could not be found in " + FileFinder.WORKING_DIRECTORY
@@ -130,9 +129,8 @@ Was searching for: |    val vvv = new GlobFinder("foo") // this does appear in t
         // Find wile with name: fullFileName in project.
         case other => println(other + "--NO_MATCH" + Pos()) //  // Hello.scala
       }
-      currentLineDesugared += 1
     }
-    Debug.trace("Done1")
+    Debug.trace("Done. Out of while loop 1")
     in.close
   }
 }
