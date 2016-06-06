@@ -29,9 +29,6 @@ object Hello {
      */
     val vvv = new GlobFinder("foo") // this does appear in the parsed code.
 
-    val toPrint = "Hello, world!"
-    println(toPrint)
-
     val proc: Process = Runtime.getRuntime.exec(Array[String]("sbt", "clean", "set scalacOptions in ThisBuild ++= Seq(\"-Xprint:parser\")", "compile", "exit"))
     val in: BufferedReader = new BufferedReader(new InputStreamReader(proc.getInputStream))
     var line: String = null
@@ -41,12 +38,63 @@ object Hello {
     Debug.trace("Working directory: " + FileFinder.WORKING_DIRECTORY)
     FileFinder.setMySearchDepth(20)
 
-    // The desugared code doesn't have a type on it.
-    val testInput = """      val vvv = new GlobFinder("foo");"""
-    testInput match {
-      case RegEx.DeclExtractor(boilerFiller, boilerDecl, boilerVarName, boilerRefType) =>
-        Debug.trace(s"$boilerFiller$boilerDecl $boilerVarName: $boilerRefType")
-      case unmatchedInput => Debug.trace(unmatchedInput) //       val vvv = new GlobFinder("foo");
+    type FiveStrings = (String, String, String, String, String)
+    def matchInDesugaredCode(reader: BufferedReader, parsedDeclaration: FiveStrings): Unit = {
+      val (leftSide, filler, valOrVar, varName, rightSide) = parsedDeclaration
+      var matchesDeclaration = false
+      while (matchesDeclaration == false && line != null) {
+        line = reader.readLine
+        Debug.trace("Starting Loop 3!!!")
+        line match {
+          case RegEx.TypedDesugaredDeclExtractor(boilerFiller, boilerValOrVar, boilerVarName, boilerRefType) =>
+            if(boilerValOrVar.equals(valOrVar) && boilerVarName.equals(varName)) {
+              Debug.trace(s"$leftSide$rightSide| matched: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
+              matchesDeclaration = true // exit
+            } else {
+              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
+            }
+          case RegEx.DesugaredDeclExtractor(boilerFiller, boilerDecl, boilerVarName) =>
+            if(boilerDecl.equals(valOrVar) && boilerVarName.equals(varName)) {
+              // they matched, but no need to insert a type
+              Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName = ...;")
+              matchesDeclaration = true // exit
+            } else {
+              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName = ...;")
+            }
+          case unmatchedLine  =>
+            System.err.println(s"Was searching for: |$leftSide$rightSide| in boilerplatey code")
+            System.err.println(unmatchedLine + Pos())
+        }
+      }
+    }
+
+    def iterateThroughSourceFile(file: String): Unit = {
+      var fileLine: String = ""
+      var linesInFile: String = ""
+      val br: BufferedReader = new BufferedReader(new FileReader(file))
+      try {
+        // then search through source code
+        while ( {fileLine = br.readLine; fileLine} != null) {
+          Debug.trace("Starting Loop 2!!!")
+          fileLine match {
+            case RegEx.SourceDeclExtractor(leftSide, filler, valOrVar, varName, rightSide) =>
+              Debug.trace(s"Matched $leftSide$rightSide. In source file (No boilerplate).")
+              matchInDesugaredCode(
+                reader = in,
+                parsedDeclaration = (leftSide, filler, valOrVar, varName, rightSide)
+              )
+              Debug.trace(s"$leftSide$rightSide is defined. Out of while loop 3")
+            case unmatchedLine =>
+              linesInFile += unmatchedLine + File.separator // append without modification
+          }
+          // if the line is a declaration, insert the type (increment the desugared file until you get a match)
+        }
+      } finally {
+        if (br != null) {
+          br.close()
+          Debug.trace("closed br")
+        }
+      }
     }
 
     // first search through desugared code
@@ -62,65 +110,7 @@ object Hello {
             case Some(path) =>
               Debug.trace("Some path: " + path.toString)
               val currentFile = path.toString
-
-              var fileLine: String = ""
-              var linesInFile: String = ""
-              val br: BufferedReader = new BufferedReader(new FileReader(currentFile))
-              try {
-                // then search through source code
-                while ( {fileLine = br.readLine; fileLine} != null) {
-                  Debug.trace("Starting Loop 2!!!")
-                  fileLine match {
-                    case RegEx.DeclExtractorNoBoilerplate(leftSide, filler, decl, varName, rightSide) => {
-                      Debug.trace(s"Matched $leftSide$rightSide. In source file (No boilerplate).")
-                      var matchesDeclaration = false
-                      // var boilerLine: String = null // This line is the same as the outer line
-                      // then search through desugared code again
-                      while (matchesDeclaration == false && line != null) {
-                        line = in.readLine
-                        Debug.trace("Starting Loop 3!!!")
-                        line match {
-                            // val vvv = new GlobFinder("foo");
-                          case RegEx.DeclExtractor(boilerFiller, boilerDecl, boilerVarName, boilerRefType) =>
-                            if(boilerDecl.equals(decl) && boilerVarName.equals(varName)) {
-                              Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName: $boilerRefType = ...;")
-                              matchesDeclaration = true // exit
-                            } else {
-                              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName: $boilerRefType = ...;")
-                            }
-                          case RegEx.DeclExtractorNoType(boilerFiller, boilerDecl, boilerVarName) =>
-                            if(boilerDecl.equals(decl) && boilerVarName.equals(varName)) {
-                              // they matched, but no need to insert a type
-                              Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName = ...;")
-                              matchesDeclaration = true // exit
-                            } else {
-                              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName = ...;")
-                            }
-                          case unmatchedLine  => {
-                            System.err.println(s"Was searching for: |$leftSide$rightSide| in boilerplatey code")
-                            System.err.println(unmatchedLine + Pos())
-                            /*
-Was searching for: |    val vvv = new GlobFinder("foo") // this does appear in the parsed code.| in boilerplatey code
-      val vvv = new GlobFinder("foo"); - com.example.Hello.main(Hello.scala:83)
-      ^ It's skipping over the match!
-                             */
-                          } // too much output
-                        }
-                      }
-                      Debug.trace(s"$leftSide$rightSide is defined. Out of while loop 3")
-                    }
-                    case unmatchedLine => {
-                      linesInFile += unmatchedLine + File.separator // append without modification
-                    }
-                  }
-                  // if the line is a declaration, insert the type (increment the desugared file until you get a match)
-                }
-              } finally {
-                if (br != null) {
-                  br.close()
-                  Debug.trace("closed br")
-                }
-              }
+              iterateThroughSourceFile(file = currentFile)
             //JavaMain.handleFile(path)
             case None => Tester.killApplication(
               s"This file $fileName was supposed to exist, but could not be found in " + FileFinder.WORKING_DIRECTORY

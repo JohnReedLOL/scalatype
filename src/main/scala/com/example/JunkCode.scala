@@ -71,5 +71,14 @@ object JunkCode {
     case _ => Debug.trace("Fail2")
   }
   // System.exit(-1)
+
+  // The desugared code doesn't have a type on it.
+  val testInput = """      val vvv = new GlobFinder("foo");"""
+  testInput match {
+    case RegEx.DeclExtractor(boilerFiller, boilerDecl, boilerVarName, boilerRefType) =>
+      Debug.trace(s"$boilerFiller$boilerDecl $boilerVarName: $boilerRefType")
+    case unmatchedInput => Debug.trace(unmatchedInput) //       val vvv = new GlobFinder("foo");
+  }
+
   */
 }
