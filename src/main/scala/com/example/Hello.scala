@@ -5,8 +5,9 @@ import java.nio.file.Path
 import java.util._
 
 import scala.trace.{Debug, Pos, SDebug}
-import scala.util.matching.Regex
 import info.collaboration_station.utilities.{FileFinder, GlobFinder}
+import scala.util.matching.Regex
+
 
 object Hello {
   def main(args: Array[String]): Unit = {
@@ -58,7 +59,8 @@ object Hello {
     }
     val string4 = " var   cat  = makeCat();"
     string4 match {
-      case RegEx.DeclExtractorNoBoilerplate(filler, decl, varName) => println(s"$decl $varName")
+      case RegEx.DeclExtractorNoBoilerplate(leftSide, filler, decl, rightSide, varName) =>
+        println(s"|$leftSide\\|$filler\\|$decl\\|$rightSide\\|$varName\\|")
       case _ => println("Fail2")
     }
     // System.exit(-1)
@@ -89,7 +91,7 @@ object Hello {
               try {
                 while ( {line = br.readLine; line} != null) {
                   line match {
-                    case RegEx.DeclExtractorNoBoilerplate(filler, decl, varName) => {println(s"$filler$decl $varName --DEFINED")}
+                    case RegEx.DeclExtractorNoBoilerplate(_, filler, decl, _, varName) => {println(s"$filler$decl $varName --DEFINED")}
                     case _ => println("No declaration")
                   }
                   // if the line is a declaration, insert the type (increment the desugared file until you get a match)

@@ -32,15 +32,15 @@ object RegEx {
          ;
     """.replaceAll("(\\s)", "").r
 
-  // Same, but without the : Type. Semi-colon optional.
+  // Same, but without the : Type. Semi-colon optional. Extra breaks for right of val/var and left (insert types in breaks)
   val DeclExtractorNoBoilerplate =
-    """(\s* | .* ; \s* | .* \s+)
+    """((\s* | .* ; \s* | .* \s+)
          (val|var)
          \s+
-         (\S+)
+         (\S+))(
          \s*
          =
-         .*
+         .*)
     """.replaceAll("(\\s)", "").r
 
   val BookExtractorRE: Regex =
