@@ -59,33 +59,31 @@ object Hello {
       val (leftSide, filler, valOrVar, varName, rightSide) = parsedDeclaration
       var matchesDeclaration = false
       var toReturn: Option[String] = None
-      System.err.println(s"Looking for $valOrVar $varName$rightSide" + Pos())
       while (matchesDeclaration == false && line != null) {
         line = reader.readLine
         // Debug.trace("Starting Loop 3!!!")
         line match {
           case RegEx.TypedDesugaredDeclExtractor(boilerFiller, boilerValOrVar, boilerVarName, boilerRefType) =>
             if(boilerValOrVar.equals(valOrVar) && boilerVarName.equals(varName)) {
-              System.err.println(s"Found Typed $boilerValOrVar $boilerVarName: $boilerRefType" + Pos())
-              // Debug.trace(s"$leftSide$rightSide| matched: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
+              Debug.trace(s"$leftSide$rightSide| matched: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
               toReturn = Some(s"$leftSide: $boilerRefType$rightSide") // put in type
-              // Debug.trace(s"Returning:: $leftSide: $boilerRefType$rightSide")
+              Debug.trace(s"Returning:: $leftSide: $boilerRefType$rightSide")
               matchesDeclaration = true // exit
             } else {
-              // Debug.trace(s"$leftSide$rightSide| failed to match: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
+              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
             }
           case RegEx.DesugaredDeclExtractor(boilerFiller, boilerDecl, boilerVarName) =>
             if(boilerDecl.equals(valOrVar) && boilerVarName.equals(varName)) {
-              System.err.println(s"Found (no type) $boilerDecl $boilerVarName" + Pos())
               // they matched, but no need to insert a type
-              // Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName = ...;")
+              Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName = ...;")
               toReturn = None // None can also be used if no type was inserted in desugared code
               matchesDeclaration = true // exit
             } else {
-              // Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName = ...;")
+              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName = ...;")
             }
           case unmatchedLine  =>
-            System.err.println(s"Unmatched: $unmatchedLine")
+            System.err.println(s"Was searching for: |$leftSide$rightSide| in boilerplatey code")
+            System.err.println(unmatchedLine + Pos())
             toReturn = None // just to be explicit
         }
       }
@@ -107,18 +105,18 @@ object Hello {
           // Debug.trace("Starting Loop 2!!!")
           line match {
             case RegEx.SourceDeclExtractor(leftSide, filler, valOrVar, varName, rightSide) =>
-              // Debug.trace(s"Matched $leftSide$rightSide. In source file (No boilerplate).")
+              Debug.trace(s"Matched $leftSide$rightSide. In source file (No boilerplate).")
               val toAppend: Option[String] = getTypedDeclaration(
                 reader = in,
                 parsedDeclaration = (leftSide, filler, valOrVar, varName, rightSide)
               )
               toAppend match {
                 case Some(typedDeclaration) =>
-                  // Debug.trace("Typed declaration: " + typedDeclaration)
+                  Debug.trace("Typed declaration: " + typedDeclaration)
                   outputFile += typedDeclaration + "\n"
                 case None => outputFile += line + "\n"
               }
-              // Debug.trace(s"$leftSide$rightSide is defined. Out of while loop 3")
+              Debug.trace(s"$leftSide$rightSide is defined. Out of while loop 3")
             case _ =>
               outputFile += line + "\n" // append without modification
           }
@@ -159,7 +157,7 @@ object Hello {
             )
           }
         // Find wile with name: fullFileName in project.
-        case other => // println(other + "--NO_MATCH" + Pos()) //  // Hello.scala
+        case other => println(other + "--NO_MATCH" + Pos()) //  // Hello.scala
       }
     }
     Debug.trace("Done. Out of while loop 1")

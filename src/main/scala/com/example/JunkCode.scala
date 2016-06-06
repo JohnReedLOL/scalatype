@@ -9,6 +9,17 @@ import scala.trace.Debug
   * Created by johnreed on 6/5/16.
   */
 object JunkCode {
+
+  def succ(i: Int, j: Int): Int = i + j + 1
+
+  case class Foo() {
+    def succ = 8
+    def succ(i: Int) = i + 1
+  }
+  val f = new Foo()
+  val v = f.succ
+  val x = 7;
+
   /*
   def handleFile(path: Path) {
     val log: File = new File(path.toString)

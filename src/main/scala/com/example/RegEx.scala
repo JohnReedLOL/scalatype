@@ -17,40 +17,44 @@ object RegEx {
 
   // extracts declarations such as " val cat_!: Cat = makeCat()" or "Foo.bar();var     <><: :Int = 7"
   // or "/*comment*/ var cat: CAT_<>< = makeCat()"
+  // Note: desugared type is not necessarily lowercase. Ex. lala.Type
   val TypedDesugaredDeclExtractor =
-    """(\s* | .* ; \s* | .* \s+)
+    """(\s* | .* \s+)
          (val|var)
          \s+
          ([^:;\s]+)
          \s*
          :
          \s*
-         ([A-Z]\S*)
+         (\S*)
          \s*
          =
          .*
-         ;
+         ;{1}
     """.replaceAll("(\\s)", "").r
 
   /**
     * Same as DeclExtractor, but without the type.
     * Used when the parser does not include a type
+    * // getting rid of ".* ; \s* | " for complexity reasons
     */
   val DesugaredDeclExtractor =
-    """(\s* | .* ; \s* | .* \s+)
+    """(\s* | .* \s+)
          (val|var)
          \s+
          ([^:;\s]+)
          \s*
          =
          .*
-         ;
+         ;{1}
     """.replaceAll("(\\s)", "").r
 
   // Same, but without the : Type. Semi-colon optional. Extra breaks for right of val/var and left (insert types in breaks)
   // warning, will break for val lala_:_int:Int = 5
+  // get rid of " .* ; \s* |" for simplicity
+  // No colons in source decl (because then it would be a typed decl)
   val SourceDeclExtractor =
-    """((\s* | .* ; \s* | .* \s+)
+    """((\s* | .* \s+)
          (val|var)
          \s+
          ([^:;\s]+))(
