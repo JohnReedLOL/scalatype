@@ -18,6 +18,8 @@ resolvers += "johnreed2 bintray" at "http://dl.bintray.com/content/johnreed2/mav
 
 libraryDependencies += "scala.trace" %% "scala-trace-debug" % "2.2.14"
 
+scalacOptions ++= Seq("-Xprint:parser", "-Xfatal-warnings", "-unchecked", "-feature", "-Xlint", "-Yinline-warnings", "-Ywarn-inaccessible", "-Ywarn-nullary-override", "-Ywarn-nullary-unit")
+
 libraryDependencies ++= Seq(
   "eu.timepit" %% "refined"            % "0.4.0",
   "eu.timepit" %% "refined-scalaz"     % "0.4.0",         // optional

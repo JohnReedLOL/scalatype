@@ -5,7 +5,8 @@ import java.nio.file.Path
 import java.util._
 
 import scala.trace.{Debug, Pos, SDebug}
-import info.collaboration_station.utilities.{FileFinder, GlobFinder}
+import info.collaboration_station.utilities.{FileFinder, GlobFinder, Tester}
+
 import scala.util.matching.Regex
 
 
@@ -26,7 +27,7 @@ object Hello {
       at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
       ... 3 more
      */
-    val vvv = new GlobFinder("foo")
+    val vvv = new GlobFinder("foo") // this does appear in the parsed code.
 
     val toPrint = "Hello, world!"
     println(toPrint)
@@ -37,51 +38,32 @@ object Hello {
 
     Thread.sleep(100)
 
-    val string1 = " // Tester.java"
-    val string2 = " // Hello.scala"
-    // [[syntax trees at end of                    parser]] // JavaMain.java--NO_MATCH
-    /*
-    string1 match {
-      case ScalaFileRegEx((fileName1 @ _), (suffix @ _)) => println("file: " + fileName1 + " suffix: " + suffix)
-      case other => println(other + "--NO_MATCH")
-    }*/
-    string2 match {
-      case RegEx.ScalaFileExtractor(fileName) => println("file: " + fileName)
-      case other => println(other + "--NO_MATCH")
-    }
-    type CAT_<>< = Int
-    def makeCat() = 8
-    /*comment*/ var cat: CAT_<>< = makeCat()
-    val string3 = " /*comment*/   var cat    :  CAT_<><  = makeCat() ;"
-    string3 match {
-      case RegEx.DeclExtractor(filler, decl, varName, refType) => println(s"$decl $varName $refType")
-      case _ => println("Fail")
-    }
-    val string4 = " var   cat  = makeCat();"
-    string4 match {
-      case RegEx.DeclExtractorNoBoilerplate(leftSide, filler, decl, rightSide, varName) =>
-        println(s"|$leftSide\\|$filler\\|$decl\\|$rightSide\\|$varName\\|")
-      case _ => println("Fail2")
-    }
-    // System.exit(-1)
-
-    println("Working directory: " + FileFinder.WORKING_DIRECTORY)
+    Debug.trace("Working directory: " + FileFinder.WORKING_DIRECTORY)
     FileFinder.setMySearchDepth(20)
+
+    // The desugared code doesn't have a type on it.
+    val testInput = """      val vvv = new GlobFinder("foo");"""
+    testInput match {
+      case RegEx.DeclExtractor(boilerFiller, boilerDecl, boilerVarName, boilerRefType) =>
+        Debug.trace(s"$boilerFiller$boilerDecl $boilerVarName: $boilerRefType")
+      case unmatchedInput => Debug.trace(unmatchedInput) //       val vvv = new GlobFinder("foo");
+    }
 
     var currentLine = 0 // start at zero and go up
     var currentFile = "" // start with no file.
     var currentLineDesugared = 0
+    // first search through desugared code
     while ( {line = in.readLine; line} != null) {
       //System.out.println(line)
       line match {
         //  // Tester.java
         case RegEx.ScalaFileExtractor(fileName) =>
-          println("file: " + fileName + "\n\n")
+          Debug.trace("file: " + fileName)
           val pathNullable: Path = FileFinder.tryFindAbsolutePathOfFileWhoseNameIs(fileName, FileFinder.WORKING_DIRECTORY)
           val pathOption: Option[Path] = Option(pathNullable) // None if path is null
           pathOption match {
             case Some(path) =>
-              println("Some path: " + path.toString)
+              Debug.trace("Some path: " + path.toString)
               currentFile = path.toString
               currentLine = 0
 
@@ -89,10 +71,48 @@ object Hello {
               var lines: String = ""
               val br: BufferedReader = new BufferedReader(new FileReader(currentFile))
               try {
+                // then search through source code
                 while ( {line = br.readLine; line} != null) {
                   line match {
-                    case RegEx.DeclExtractorNoBoilerplate(_, filler, decl, _, varName) => {println(s"$filler$decl $varName --DEFINED")}
-                    case _ => println("No declaration")
+                    case RegEx.DeclExtractorNoBoilerplate(leftSide, filler, decl, varName, rightSide) => {
+                      Debug.trace(s"Matched $leftSide$rightSide. In source file (No boilerplate).")
+                      var matchesDeclaration = false
+                      var boilerLine: String = null
+                      // then search through desugared code again
+                      while ({boilerLine = in.readLine; boilerLine} != null && matchesDeclaration == false) {
+                        boilerLine match {
+                            // val vvv = new GlobFinder("foo");
+                          case RegEx.DeclExtractor(boilerFiller, boilerDecl, boilerVarName, boilerRefType) =>
+                            if(boilerDecl.equals(decl) && boilerVarName.equals(varName)) {
+                              Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName: $boilerRefType = ...;")
+                              matchesDeclaration = true // exit
+                            } else {
+                              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName: $boilerRefType = ...;")
+                            }
+                          case RegEx.DeclExtractorNoType(boilerFiller, boilerDecl, boilerVarName) =>
+                            if(boilerDecl.equals(decl) && boilerVarName.equals(varName)) {
+                              // they matched, but no need to insert a type
+                              Debug.trace(s"$leftSide$rightSide| matched: $boilerDecl $boilerVarName = ...;")
+                              matchesDeclaration = true // exit
+                            } else {
+                              Debug.trace(s"$leftSide$rightSide| failed to match: $boilerDecl $boilerVarName = ...;")
+                            }
+                          case unmatchedLine  => {
+                            System.err.println(s"Was searching for: |$leftSide$rightSide| in boilerplatey code")
+                            System.err.println(unmatchedLine + Pos())
+                            /*
+Was searching for: |    val vvv = new GlobFinder("foo") // this does appear in the parsed code.| in boilerplatey code
+      val vvv = new GlobFinder("foo"); - com.example.Hello.main(Hello.scala:83)
+      ^ It's skipping over the match!
+                             */
+                          } // too much output
+                        }
+                      }
+                      Debug.trace(s"$filler$decl $varName --DEFINED")
+                    }
+                    case unmatchedLine => {
+                      lines += unmatchedLine + File.separator // append without modification
+                    }
                   }
                   // if the line is a declaration, insert the type (increment the desugared file until you get a match)
                 }
@@ -101,16 +121,18 @@ object Hello {
                   br.close()
                 }
               }
-              println("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+              Debug.trace("Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             //JavaMain.handleFile(path)
-            case None => println("No path")
+            case None => Tester.killApplication(
+              s"This file $fileName was supposed to exist, but could not be found in " + FileFinder.WORKING_DIRECTORY
+            )
           }
         // Find wile with name: fullFileName in project.
-        case other => println(other + "--NO_MATCH") //  // Hello.scala
+        case other => println(other + "--NO_MATCH" + Pos()) //  // Hello.scala
       }
       currentLineDesugared += 1
     }
-    System.out.println("Done1")
+    Debug.trace("Done1")
     in.close
   }
 }

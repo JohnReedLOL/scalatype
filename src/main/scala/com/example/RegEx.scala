@@ -21,7 +21,7 @@ object RegEx {
     """(\s* | .* ; \s* | .* \s+)
          (val|var)
          \s+
-         (\S+)
+         ([^:;\s]+)
          \s*
          :
          \s*
@@ -32,12 +32,28 @@ object RegEx {
          ;
     """.replaceAll("(\\s)", "").r
 
+  /**
+    * Same as DeclExtractor, but without the type.
+    * Used when the parser does not include a type
+    */
+  val DeclExtractorNoType =
+    """(\s* | .* ; \s* | .* \s+)
+         (val|var)
+         \s+
+         ([^:;\s]+)
+         \s*
+         =
+         .*
+         ;
+    """.replaceAll("(\\s)", "").r
+
   // Same, but without the : Type. Semi-colon optional. Extra breaks for right of val/var and left (insert types in breaks)
+  // warning, will break for val lala_:_int:Int = 5
   val DeclExtractorNoBoilerplate =
     """((\s* | .* ; \s* | .* \s+)
          (val|var)
          \s+
-         (\S+))(
+         ([^:;\s]+))(
          \s*
          =
          .*)
