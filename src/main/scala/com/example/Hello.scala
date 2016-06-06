@@ -37,6 +37,7 @@ object Hello {
       ... 3 more
      */
     val vvv = new GlobFinder("foo") // this does appear in the parsed code.
+    val vvvv: Utils.type = Utils
 
     val proc = Runtime.getRuntime.exec(Array[String]("sbt", "clean", "set scalacOptions in ThisBuild ++= Seq(\"-print\")", "compile", "exit"))
     val in = new BufferedReader(new InputStreamReader(proc.getInputStream))
@@ -65,10 +66,11 @@ object Hello {
         // Debug.trace("Starting Loop 3!!!")
         line match {
           case RegEx.TypedDesugaredDeclExtractor(boilerFiller, boilerValOrVar, boilerVarName, boilerRefType) =>
+            val shortenedSig = vvvv.shortenTypeSignature(boilerRefType) // remove path.to.Type
             if(boilerValOrVar.equals(valOrVar) && boilerVarName.equals(varName)) {
               System.err.println(s"Found Typed $boilerValOrVar $boilerVarName: $boilerRefType" + Pos())
               // Debug.trace(s"$leftSide$rightSide| matched: $boilerValOrVar $boilerVarName: $boilerRefType = ...;")
-              toReturn = Some(s"$leftSide: $boilerRefType$rightSide") // put in type
+              toReturn = Some(s"$leftSide: $shortenedSig$rightSide") // put in type
               // Debug.trace(s"Returning:: $leftSide: $boilerRefType$rightSide")
               matchesDeclaration = true // exit
             } else {

@@ -1,6 +1,6 @@
 *.class
 *.log
-
+*.txt
 # sbt specific
 dist/*
 target/
