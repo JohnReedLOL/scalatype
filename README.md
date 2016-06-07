@@ -28,3 +28,7 @@ Just do "sbt package" to generate a jar file.
 #### Committers:
 
 - John Reed
+
+#### Note:
+
+scalatype is a proof of concept only. Simply put, it was able to convert one source file from having no explicit type annotations to having them, but due to poor design decisions, a redo is necessary.
